@@ -1,6 +1,6 @@
 # HC (Http Client)
 
-[![test](https://github.com/morkid/hc/actions/workflows/go.yml/badge.svg)](https://github.com/morkid/hc/actions/workflows/go.yml)
+[![test](https://github.com/morkid/hc/actions/workflows/go.yml/badge.svg?label=test)](https://github.com/morkid/hc/actions/workflows/go.yml)
 
 Simple HTTP Client for go with interceptor support.
 
