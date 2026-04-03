@@ -1,0 +1,8 @@
+*
+!/.gitignore
+!/go.mod
+!/go.sum
+!/hc.go
+!/hc_test.go
+!/README.md
+!/LICENSE
