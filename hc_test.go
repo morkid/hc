@@ -15,7 +15,7 @@ func TestNew(t *testing.T) {
 	client := New(Config{
 		LogEnabled:             true,
 		LogResponseBodyEnabled: true,
-		LogHeader:              true,
+		LogHeaderEnabled:       true,
 		LogPrefix:              "[TEST]",
 		Logger:                 log.New(io.Discard, "", log.LstdFlags),
 		Interceptor: func(req *http.Request) error {

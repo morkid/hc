@@ -76,7 +76,7 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	if t.Config.LogEnabled {
 		t.Log("[HTTP] >>", req.Method, uri)
 
-		if t.Config.LogHeader {
+		if t.Config.LogHeaderEnabled {
 			for key, values := range req.Header {
 				for _, val := range values {
 					t.Log("[HTTP] >> ", key+":", val)
@@ -131,9 +131,9 @@ func (h *Interceptor) Error() string {
 type Config struct {
 	LogEnabled             bool                          // Enable log
 	LogResponseBodyEnabled bool                          // Enable log for response body
+	LogHeaderEnabled       bool                          // Enable header logging
 	LogPrefix              string                        // Log Prefix
 	Logger                 *log.Logger                   // Logger instance
-	LogHeader              bool                          // Enable header logging
 	Interceptor            func(req *http.Request) error // Intercept request
 	Timeout                int                           // Timeout seconds
 }
