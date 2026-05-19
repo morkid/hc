@@ -53,7 +53,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode)
 
 	result := map[string]any{}
-	err = JsonResponse(res, &result)
+	err = JSONResponse(res, &result)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, len(result["products"].([]any)) > 0)
 
@@ -122,4 +122,19 @@ func TestNewHttpClientReal(t *testing.T) {
 	res, err := client.Do(req)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, 201, res.StatusCode)
+}
+
+func TestBaseURL(t *testing.T) {
+	client := New(Config{
+		BaseURL: "https://dummyjson.com:443/",
+		Interceptor: func(req *http.Request) error {
+			t.Log("Interceptor called", req.URL.String())
+			return nil
+		},
+	})
+
+	req, _ := http.NewRequest("GET", "/products", nil)
+	res, err := client.Do(req)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 200, res.StatusCode)
 }

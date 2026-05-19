@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -35,6 +36,26 @@ func (t *transport) Log(s ...any) {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error) {
+	if req.URL.Hostname() == "" {
+		parsed, err := url.Parse(t.Config.BaseURL)
+		if err == nil {
+			req.URL.Host = parsed.Host
+			req.Host = parsed.Host
+
+			req.URL.Scheme = "https"
+			if parsed.Scheme != "" {
+				req.URL.Scheme = parsed.Scheme
+			}
+
+			if parsed.Port() != "" {
+				req.URL.Host = fmt.Sprintf("%s:%s", parsed.Hostname(), parsed.Port())
+				req.Host = fmt.Sprintf("%s:%s", parsed.Hostname(), parsed.Port())
+			}
+
+			req.URL.Path = strings.TrimRight(parsed.Path, "/") + req.URL.Path
+		}
+	}
+
 	if t.Interceptor != nil {
 		if err = t.Interceptor(req); err != nil {
 			if intercept, ok := err.(*Interceptor); ok && intercept.Error() == "" {
@@ -119,15 +140,18 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 	return res, err
 }
 
+// Interceptor is an error that can be used to intercept a request
 type Interceptor struct {
 	ErrorMessage string
 	TakeOver     func(req *http.Request) (res *http.Response, err error)
 }
 
+// Error returns the error message
 func (h *Interceptor) Error() string {
 	return h.ErrorMessage
 }
 
+// Config http client config
 type Config struct {
 	LogEnabled             bool                          // Enable log
 	LogResponseBodyEnabled bool                          // Enable log for response body
@@ -136,6 +160,7 @@ type Config struct {
 	Logger                 *log.Logger                   // Logger instance
 	Interceptor            func(req *http.Request) error // Intercept request
 	Timeout                int                           // Timeout seconds
+	BaseURL                string                        // Base URL
 }
 
 // New create new http client
@@ -158,7 +183,8 @@ func New(configs ...Config) *http.Client {
 	}
 }
 
-func JsonResponse(res *http.Response, obj any) error {
+// JSONResponse unmarshal response body to json
+func JSONResponse(res *http.Response, obj any) error {
 	var err error
 	var body []byte
 	body, err = io.ReadAll(res.Body)
