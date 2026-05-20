@@ -19,6 +19,7 @@ helloWorld := hc.Interceptor{
 }
 
 client := hc.New(hc.Config{
+    BaseURL: "http://example.com",
     LogEnabled: true,
     Interceptor: func (req *http.Request) error {
         // customize http header
@@ -34,7 +35,7 @@ client := hc.New(hc.Config{
     }
 })
 
-req, _ := http.NewRequest("GET", "http://example.com/hello-world.json", nil)
+req, _ := http.NewRequest("GET", "/hello-world.json", nil)
 res, err := client.Do(req)
 log.Println(err)
 log.Println(res.StatusCode)
