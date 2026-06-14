@@ -33,6 +33,7 @@ go get github.com/morkid/hc
 - Custom logger support
 - Configurable timeout
 - Configurable TLS certificate verification
+- Automatic retry with configurable delay and condition
 - JSON response helper
 - [Resty](https://github.com/go-resty/resty) integration
 
@@ -105,6 +106,31 @@ req, _ := http.NewRequest("GET", "/hello-world.json", nil)
 res, _ := client.Do(req)
 ```
 
+### Retry
+
+Retry on failure (error or status >= 500) with a configurable delay.
+
+```go
+client := hc.New(hc.Config{
+    MaxRetries: 3,
+    RetryDelay: time.Second,
+})
+```
+
+You can also provide a custom retry condition to control when retries happen:
+
+```go
+client := hc.New(hc.Config{
+    MaxRetries:     3,
+    RetryDelay:     500 * time.Millisecond,
+    RetryCondition: func(res *http.Response, err error) bool {
+        return err != nil || res.StatusCode >= 500
+    },
+})
+```
+
+Default is `0` (no retry).
+
 ### JSON Response Helper
 
 Use `hc.JSONResponse` to unmarshal the response body directly into a struct.
@@ -127,6 +153,9 @@ err := hc.JSONResponse(res, &result)
 | `Timeout`               | `int`                          | Timeout in seconds (default: 30)         |
 | `BaseURL`               | `string`                       | Base URL for relative path resolution    |
 | `InsecureSkipVerify`    | `bool`                         | Skip TLS certificate verification       |
+| `MaxRetries`            | `int`                          | Maximum retry attempts (default: 0 = no retry) |
+| `RetryDelay`            | `time.Duration`                | Delay between retries                   |
+| `RetryCondition`        | `func(*http.Response, error) bool` | Custom retry condition (default: retry on error or status >= 500) |
 
 ## Resty Integration
 
