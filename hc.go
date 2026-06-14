@@ -77,7 +77,7 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 
 	transp := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: t.Config.InsecureSkipVerify,
 		},
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          100,
@@ -161,6 +161,7 @@ type Config struct {
 	Interceptor            func(req *http.Request) error // Intercept request
 	Timeout                int                           // Timeout seconds
 	BaseURL                string                        // Base URL
+	InsecureSkipVerify     bool                          // Skip TLS certificate verification (not recommended for production)
 }
 
 // New create new http client

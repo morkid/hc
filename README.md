@@ -32,6 +32,7 @@ go get github.com/morkid/hc
 - Configurable logging (request, response body, headers)
 - Custom logger support
 - Configurable timeout
+- Configurable TLS certificate verification
 - JSON response helper
 - [Resty](https://github.com/go-resty/resty) integration
 
@@ -125,8 +126,11 @@ err := hc.JSONResponse(res, &result)
 | `Interceptor`           | `func(*http.Request) error`    | Intercept and customize requests         |
 | `Timeout`               | `int`                          | Timeout in seconds (default: 30)         |
 | `BaseURL`               | `string`                       | Base URL for relative path resolution    |
+| `InsecureSkipVerify`    | `bool`                         | Skip TLS certificate verification       |
 
 ## Resty Integration
+
+HC's transport can be dropped into [Resty](https://github.com/go-resty/resty), so you get HC's interceptor, logging, and base URL features through Resty's fluent API.
 
 ```go
 client := hc.New()
@@ -134,5 +138,7 @@ client := hc.New()
 restyClient := resty.New()
 restyClient.SetTransport(client.Transport)
 
-res, err := restyClient.R().Get("http://example.com/hello-world.json")
+res, err := restyClient.R().
+    SetHeader("Accept", "application/json").
+    Get("http://example.com/hello-world.json")
 ```

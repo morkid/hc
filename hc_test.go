@@ -124,6 +124,18 @@ func TestNewHttpClientReal(t *testing.T) {
 	assert.Equal(t, 201, res.StatusCode)
 }
 
+func TestInsecureSkipVerify(t *testing.T) {
+	client := New(Config{
+		InsecureSkipVerify: true,
+		Timeout:            1,
+	})
+
+	req, _ := http.NewRequest("GET", "https://localhost:9999", nil)
+	_, err := client.Do(req)
+	// must fail (connection refused), not TLS error
+	assert.Error(t, err)
+}
+
 func TestBaseURL(t *testing.T) {
 	client := New(Config{
 		BaseURL: "https://dummyjson.com:443/",
