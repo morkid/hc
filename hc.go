@@ -75,64 +75,96 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		t.Config.Timeout = 30
 	}
 
-	transp := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DialContext: func() func(ctx context.Context, network, addr string) (net.Conn, error) {
-			dialer := &net.Dialer{
-				Timeout:   time.Duration(t.Config.Timeout) * time.Second,
-				KeepAlive: time.Duration(t.Config.Timeout) * time.Second,
-			}
-
-			return dialer.DialContext
-		}(),
+	var bodyBytes []byte
+	if req.Body != nil && t.Config.MaxRetries > 0 {
+		bodyBytes, err = io.ReadAll(req.Body)
+		if err == nil {
+			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
 	}
 
-	if t.Config.LogEnabled {
-		t.Log("[HTTP] >>", req.Method, uri)
-
-		if t.Config.LogHeaderEnabled {
-			for key, values := range req.Header {
-				for _, val := range values {
-					t.Log("[HTTP] >> ", key+":", val)
-				}
-			}
-		}
-
-		if t.Config.LogResponseBodyEnabled && req.Body != nil {
-			bodyBytes, err := io.ReadAll(req.Body)
-			if err == nil {
-				if !strings.Contains(req.Header.Get("content-type"), "multipart") {
-					t.Log("[HTTP] >>", string(bodyBytes))
-				}
+	for attempt := 0; attempt <= t.Config.MaxRetries; attempt++ {
+		if attempt > 0 {
+			if bodyBytes != nil {
 				req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			}
+
+			select {
+			case <-req.Context().Done():
+				return nil, req.Context().Err()
+			case <-time.After(t.Config.RetryDelay):
+			}
 		}
-	}
 
-	res, err = transp.RoundTrip(req)
+		transp := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: t.Config.InsecureSkipVerify,
+			},
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			DialContext: func() func(ctx context.Context, network, addr string) (net.Conn, error) {
+				dialer := &net.Dialer{
+					Timeout:   time.Duration(t.Config.Timeout) * time.Second,
+					KeepAlive: time.Duration(t.Config.Timeout) * time.Second,
+				}
 
-	if t.Config.LogEnabled {
-		messages := []any{"[HTTP] <<", req.Method, uri, err}
+				return dialer.DialContext
+			}(),
+		}
 
-		if err == nil {
-			messages[3] = res.StatusCode
-			t.Log(messages...)
-			if t.LogResponseBodyEnabled {
-				if res.StatusCode >= 200 {
-					bodyBytes, err := io.ReadAll(res.Body)
-					if err == nil {
-						defer res.Body.Close()
-						t.Log("[HTTP] <<", string(bodyBytes))
-						res.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		if t.Config.LogEnabled {
+			t.Log("[HTTP] >>", req.Method, uri)
+
+			if t.Config.LogHeaderEnabled {
+				for key, values := range req.Header {
+					for _, val := range values {
+						t.Log("[HTTP] >> ", key+":", val)
 					}
 				}
+			}
+
+			if t.Config.LogResponseBodyEnabled && req.Body != nil {
+				bBody, err := io.ReadAll(req.Body)
+				if err == nil {
+					if !strings.Contains(req.Header.Get("content-type"), "multipart") {
+						t.Log("[HTTP] >>", string(bBody))
+					}
+					req.Body = io.NopCloser(bytes.NewBuffer(bBody))
+				}
+			}
+		}
+
+		res, err = transp.RoundTrip(req)
+
+		if t.Config.LogEnabled {
+			messages := []any{"[HTTP] <<", req.Method, uri, err}
+
+			if err == nil {
+				messages[3] = res.StatusCode
+				t.Log(messages...)
+				if t.LogResponseBodyEnabled {
+					if res.StatusCode >= 200 {
+						bBody, err := io.ReadAll(res.Body)
+						if err == nil {
+							defer res.Body.Close()
+							t.Log("[HTTP] <<", string(bBody))
+							res.Body = io.NopCloser(bytes.NewBuffer(bBody))
+						}
+					}
+				}
+			}
+		}
+
+		if err == nil && res.StatusCode < 500 {
+			return res, nil
+		}
+
+		if attempt < t.Config.MaxRetries {
+			if t.Config.RetryCondition != nil && !t.Config.RetryCondition(res, err) {
+				return res, err
 			}
 		}
 	}
@@ -153,14 +185,18 @@ func (h *Interceptor) Error() string {
 
 // Config http client config
 type Config struct {
-	LogEnabled             bool                          // Enable log
-	LogResponseBodyEnabled bool                          // Enable log for response body
-	LogHeaderEnabled       bool                          // Enable header logging
-	LogPrefix              string                        // Log Prefix
-	Logger                 *log.Logger                   // Logger instance
-	Interceptor            func(req *http.Request) error // Intercept request
-	Timeout                int                           // Timeout seconds
-	BaseURL                string                        // Base URL
+	LogEnabled             bool                                // Enable log
+	LogResponseBodyEnabled bool                                // Enable log for response body
+	LogHeaderEnabled       bool                                // Enable header logging
+	LogPrefix              string                              // Log Prefix
+	Logger                 *log.Logger                         // Logger instance
+	Interceptor            func(req *http.Request) error       // Intercept request
+	Timeout                int                                 // Timeout seconds
+	BaseURL                string                              // Base URL
+	InsecureSkipVerify     bool                                // Skip TLS certificate verification (not recommended for production)
+	MaxRetries             int                                 // Maximum number of retry attempts (default: 0 = no retry)
+	RetryDelay             time.Duration                       // Delay between retries
+	RetryCondition         func(res *http.Response, err error) bool // Custom retry condition (default: retry on error or status >= 500)
 }
 
 // New create new http client
@@ -168,6 +204,10 @@ func New(configs ...Config) *http.Client {
 	config := Config{}
 	if len(configs) > 0 {
 		config = configs[0]
+	}
+
+	if config.MaxRetries < 0 {
+		config.MaxRetries = 0
 	}
 
 	timeout := config.Timeout
