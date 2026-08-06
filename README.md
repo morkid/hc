@@ -79,8 +79,8 @@ res, _ := client.Do(req)
 
 The interceptor has two modes:
 
-1. **Return an error** — the request is rejected with that error.
-2. **Return an `*hc.Interceptor` with empty `ErrorMessage` and a `TakeOver` function** — the request is intercepted and the `TakeOver` function provides a mock response.
+1. **Return an error**: the request is rejected with that error.
+2. **Return an `*hc.Interceptor` with empty `ErrorMessage` and a `TakeOver` function:** the request is intercepted and the `TakeOver` function provides a mock response.
 
 ```go
 helloWorld := hc.Interceptor{
@@ -176,28 +176,28 @@ client := hc.New(hc.Config{
 
 ## Configuration
 
-| Field                   | Type                           | Description                              |
-| ----------------------- | ------------------------------ | ---------------------------------------- |
-| `LogEnabled`            | `bool`                         | Enable request/response logging          |
-| `LogResponseBodyEnabled`| `bool`                         | Enable response body logging             |
-| `LogHeaderEnabled`       | `bool`                         | Enable request header logging            |
-| `LogHTTPPrefixDisabled`  | `bool`                         | Disable `[HTTP] <<` / `[HTTP] >>` prefix |
-| `LogSingleJSONEnabled`   | `bool`                         | Enable single-line JSON log output       |
-| `LogRequestBodyDisabled` | `bool`                         | Disable request body from log output     |
-| `LogPrefix`              | `string`                       | Prefix for log messages                  |
-| `Logger`                 | `*log.Logger`                  | Custom logger instance                   |
-| `Interceptor`            | `func(*http.Request) error`    | Intercept and customize requests         |
-| `Timeout`                | `int`                          | Timeout in seconds (default: 30)         |
-| `BaseURL`                | `string`                       | Base URL for relative path resolution    |
-| `InsecureSkipVerify`     | `bool`                         | Skip TLS certificate verification       |
-| `ForceAttemptHTTP2Disabled`   | `bool`                    | Disable HTTP/2 (default: false)          |
-| `MaxIdleConns`                | `int`                     | Max idle connections (default: 100)      |
-| `IdleConnTimeoutSecond`       | `int`                     | Idle connection timeout seconds (default: 90) |
-| `TLSHandshakeTimeoutSecond`   | `int`                     | TLS handshake timeout seconds (default: 10) |
-| `ExpectContinueTimeoutSecond` | `int`                     | Expect continue timeout seconds (default: 1) |
-| `MaxRetries`             | `int`                          | Maximum retry attempts (default: 0 = no retry) |
-| `RetryDelay`             | `time.Duration`                | Delay between retries                   |
-| `RetryCondition`         | `func(*http.Response, error) bool` | Custom retry condition (default: retry on error or status >= 500) |
+| Field                           | Type                                 | Description                                                       |
+| ------------------------------- | ------------------------------------ | ----------------------------------------------------------------- |
+| `LogEnabled`                  | `bool`                             | Enable request/response logging                                   |
+| `LogResponseBodyEnabled`      | `bool`                             | Enable response body logging                                      |
+| `LogHeaderEnabled`            | `bool`                             | Enable request header logging                                     |
+| `LogHTTPPrefixDisabled`       | `bool`                             | Disable`[HTTP] <<` / `[HTTP] >>` prefix                       |
+| `LogSingleJSONEnabled`        | `bool`                             | Enable single-line JSON log output                                |
+| `LogRequestBodyDisabled`      | `bool`                             | Disable request body from log output                              |
+| `LogPrefix`                   | `string`                           | Prefix for log messages                                           |
+| `Logger`                      | `*log.Logger`                      | Custom logger instance                                            |
+| `Interceptor`                 | `func(*http.Request) error`        | Intercept and customize requests                                  |
+| `Timeout`                     | `int`                              | Timeout in seconds (default: 30)                                  |
+| `BaseURL`                     | `string`                           | Base URL for relative path resolution                             |
+| `InsecureSkipVerify`          | `bool`                             | Skip TLS certificate verification                                 |
+| `ForceAttemptHTTP2Disabled`   | `bool`                             | Disable HTTP/2 (default: false)                                   |
+| `MaxIdleConns`                | `int`                              | Max idle connections (default: 100)                               |
+| `IdleConnTimeoutSecond`       | `int`                              | Idle connection timeout seconds (default: 90)                     |
+| `TLSHandshakeTimeoutSecond`   | `int`                              | TLS handshake timeout seconds (default: 10)                       |
+| `ExpectContinueTimeoutSecond` | `int`                              | Expect continue timeout seconds (default: 1)                      |
+| `MaxRetries`                  | `int`                              | Maximum retry attempts (default: 0 = no retry)                    |
+| `RetryDelay`                  | `time.Duration`                    | Delay between retries                                             |
+| `RetryCondition`              | `func(*http.Response, error) bool` | Custom retry condition (default: retry on error or status >= 500) |
 
 ## Resty Integration
 
