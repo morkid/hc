@@ -35,6 +35,19 @@ func (t *transport) Log(s ...any) {
 	}
 }
 
+func (t *transport) logType(logType string, s ...any) {
+	if !t.LogHTTPPrefixDisabled {
+		switch logType {
+		case "in":
+			s = append([]any{"[HTTP] <<"}, s...)
+		case "out":
+			s = append([]any{"[HTTP] >>"}, s...)
+		}
+	}
+
+	t.Log(s...)
+}
+
 func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error) {
 	if req.URL.Hostname() == "" {
 		parsed, err := url.Parse(t.Config.BaseURL)
@@ -116,12 +129,12 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		}
 
 		if t.Config.LogEnabled {
-			t.Log("[HTTP] >>", req.Method, uri)
+			t.logType("out", req.Method, uri)
 
 			if t.Config.LogHeaderEnabled {
 				for key, values := range req.Header {
 					for _, val := range values {
-						t.Log("[HTTP] >> ", key+":", val)
+						t.logType("out", " "+key+":", val)
 					}
 				}
 			}
@@ -130,7 +143,7 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 				bBody, err := io.ReadAll(req.Body)
 				if err == nil {
 					if !strings.Contains(req.Header.Get("content-type"), "multipart") {
-						t.Log("[HTTP] >>", string(bBody))
+						t.logType("out", string(bBody))
 					}
 					req.Body = io.NopCloser(bytes.NewBuffer(bBody))
 				}
@@ -140,17 +153,17 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 		res, err = transp.RoundTrip(req)
 
 		if t.Config.LogEnabled {
-			messages := []any{"[HTTP] <<", req.Method, uri, err}
+			messages := []any{req.Method, uri, err}
 
 			if err == nil {
-				messages[3] = res.StatusCode
-				t.Log(messages...)
+				messages[2] = res.StatusCode
+				t.logType("in", messages...)
 				if t.LogResponseBodyEnabled {
 					if res.StatusCode >= 200 {
 						bBody, err := io.ReadAll(res.Body)
 						if err == nil {
 							defer res.Body.Close()
-							t.Log("[HTTP] <<", string(bBody))
+							t.logType("in", string(bBody))
 							res.Body = io.NopCloser(bytes.NewBuffer(bBody))
 						}
 					}
@@ -185,17 +198,18 @@ func (h *Interceptor) Error() string {
 
 // Config http client config
 type Config struct {
-	LogEnabled             bool                                // Enable log
-	LogResponseBodyEnabled bool                                // Enable log for response body
-	LogHeaderEnabled       bool                                // Enable header logging
-	LogPrefix              string                              // Log Prefix
-	Logger                 *log.Logger                         // Logger instance
-	Interceptor            func(req *http.Request) error       // Intercept request
-	Timeout                int                                 // Timeout seconds
-	BaseURL                string                              // Base URL
-	InsecureSkipVerify     bool                                // Skip TLS certificate verification (not recommended for production)
-	MaxRetries             int                                 // Maximum number of retry attempts (default: 0 = no retry)
-	RetryDelay             time.Duration                       // Delay between retries
+	LogEnabled             bool                                     // Enable log
+	LogResponseBodyEnabled bool                                     // Enable log for response body
+	LogHeaderEnabled       bool                                     // Enable header logging
+	LogPrefix              string                                   // Log Prefix
+	LogHTTPPrefixDisabled  bool                                     // Disable log http prefix
+	Logger                 *log.Logger                              // Logger instance
+	Interceptor            func(req *http.Request) error            // Intercept request
+	Timeout                int                                      // Timeout seconds
+	BaseURL                string                                   // Base URL
+	InsecureSkipVerify     bool                                     // Skip TLS certificate verification (not recommended for production)
+	MaxRetries             int                                      // Maximum number of retry attempts (default: 0 = no retry)
+	RetryDelay             time.Duration                            // Delay between retries
 	RetryCondition         func(res *http.Response, err error) bool // Custom retry condition (default: retry on error or status >= 500)
 }
 

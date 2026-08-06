@@ -1,8 +1,6 @@
 # HC (Http Client)
 
-[![test](https://github.com/morkid/hc/actions/workflows/go.yml/badge.svg?label=test)](https://github.com/morkid/hc/actions/workflows/go.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/morkid/hc.svg)](https://pkg.go.dev/github.com/morkid/hc)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![test](https://github.com/morkid/hc/actions/workflows/go.yml/badge.svg?label=test)](https://github.com/morkid/hc/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/morkid/hc.svg)](https://pkg.go.dev/github.com/morkid/hc) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Simple HTTP Client for Go with interceptor support.
 
