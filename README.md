@@ -28,10 +28,13 @@ go get github.com/morkid/hc
 - Request mocking via `TakeOver`
 - Automatic `BaseURL` resolution (supports relative paths)
 - Configurable logging (request, response body, headers)
+- Single-line JSON log mode
 - Custom logger support
 - Configurable timeout
 - Configurable TLS certificate verification
+- Configurable HTTP transport parameters
 - Automatic retry with configurable delay and condition
+- Request body log suppression
 - JSON response helper
 - [Resty](https://github.com/go-resty/resty) integration
 
@@ -138,22 +141,63 @@ var result map[string]any
 err := hc.JSONResponse(res, &result)
 ```
 
+### JSON Log Mode
+
+When `LogSingleJSONEnabled` is `true`, HC outputs a single JSON line per request instead of individual log lines. All other log lines are suppressed.
+
+```go
+client := hc.New(hc.Config{
+    LogEnabled:             true,
+    LogSingleJSONEnabled:   true,
+    LogResponseBodyEnabled: true,
+    LogHeaderEnabled:       true,
+})
+```
+
+Output:
+
+```json
+{"method":"POST","url":"https://example.com/api/login","status_code":200,"duration_ms":320,"attempts":1,"request_body":"...","response_body":"...","request_headers":{...},"response_headers":{...},"error_message":"","raw_error":null}
+```
+
+The `JSONLog` struct is exported and implements the `error` interface. You can type-assert errors from `Interceptor` or `RetryCondition` to `*JSONLog` for programmatic access to request metadata.
+
+### Request Body Log Suppression
+
+Set `LogRequestBodyDisabled` to `true` to exclude the request body from log output while keeping response body logging enabled.
+
+```go
+client := hc.New(hc.Config{
+    LogEnabled:             true,
+    LogResponseBodyEnabled: true,
+    LogRequestBodyDisabled: true,  // request body won't appear in logs
+})
+```
+
 ## Configuration
 
 | Field                   | Type                           | Description                              |
 | ----------------------- | ------------------------------ | ---------------------------------------- |
 | `LogEnabled`            | `bool`                         | Enable request/response logging          |
 | `LogResponseBodyEnabled`| `bool`                         | Enable response body logging             |
-| `LogHeaderEnabled`      | `bool`                         | Enable request header logging            |
-| `LogPrefix`             | `string`                       | Prefix for log messages                  |
-| `Logger`                | `*log.Logger`                  | Custom logger instance                   |
-| `Interceptor`           | `func(*http.Request) error`    | Intercept and customize requests         |
-| `Timeout`               | `int`                          | Timeout in seconds (default: 30)         |
-| `BaseURL`               | `string`                       | Base URL for relative path resolution    |
-| `InsecureSkipVerify`    | `bool`                         | Skip TLS certificate verification       |
-| `MaxRetries`            | `int`                          | Maximum retry attempts (default: 0 = no retry) |
-| `RetryDelay`            | `time.Duration`                | Delay between retries                   |
-| `RetryCondition`        | `func(*http.Response, error) bool` | Custom retry condition (default: retry on error or status >= 500) |
+| `LogHeaderEnabled`       | `bool`                         | Enable request header logging            |
+| `LogHTTPPrefixDisabled`  | `bool`                         | Disable `[HTTP] <<` / `[HTTP] >>` prefix |
+| `LogSingleJSONEnabled`   | `bool`                         | Enable single-line JSON log output       |
+| `LogRequestBodyDisabled` | `bool`                         | Disable request body from log output     |
+| `LogPrefix`              | `string`                       | Prefix for log messages                  |
+| `Logger`                 | `*log.Logger`                  | Custom logger instance                   |
+| `Interceptor`            | `func(*http.Request) error`    | Intercept and customize requests         |
+| `Timeout`                | `int`                          | Timeout in seconds (default: 30)         |
+| `BaseURL`                | `string`                       | Base URL for relative path resolution    |
+| `InsecureSkipVerify`     | `bool`                         | Skip TLS certificate verification       |
+| `ForceAttemptHTTP2Disabled`   | `bool`                    | Disable HTTP/2 (default: false)          |
+| `MaxIdleConns`                | `int`                     | Max idle connections (default: 100)      |
+| `IdleConnTimeoutSecond`       | `int`                     | Idle connection timeout seconds (default: 90) |
+| `TLSHandshakeTimeoutSecond`   | `int`                     | TLS handshake timeout seconds (default: 10) |
+| `ExpectContinueTimeoutSecond` | `int`                     | Expect continue timeout seconds (default: 1) |
+| `MaxRetries`             | `int`                          | Maximum retry attempts (default: 0 = no retry) |
+| `RetryDelay`             | `time.Duration`                | Delay between retries                   |
+| `RetryCondition`         | `func(*http.Response, error) bool` | Custom retry condition (default: retry on error or status >= 500) |
 
 ## Resty Integration
 
