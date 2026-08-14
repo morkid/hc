@@ -55,13 +55,16 @@ func (t *transport) logJSON(j *JSONLog) (err error) {
 }
 
 func (t *transport) logType(logType string, s ...any) {
+
+	switch logType {
+	case "in":
+		s = append([]any{"<<"}, s...)
+	case "out":
+		s = append([]any{">>"}, s...)
+	}
+
 	if !t.LogHTTPPrefixDisabled {
-		switch logType {
-		case "in":
-			s = append([]any{"[HTTP] <<"}, s...)
-		case "out":
-			s = append([]any{"[HTTP] >>"}, s...)
-		}
+		s = append([]any{"[HTTP]"}, s...)
 	}
 
 	if !t.Config.LogSingleJSONEnabled {
