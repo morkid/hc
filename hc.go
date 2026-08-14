@@ -104,7 +104,7 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 
 	if t.Interceptor != nil {
 		if err = t.Interceptor(req); err != nil {
-			if intercept, ok := err.(*Interceptor); ok && intercept.Error() == "" {
+			if intercept, ok := err.(*Interceptor); ok && intercept.Error() == "" && intercept.TakeOver != nil {
 				res, err := intercept.TakeOver(req)
 				t.logType("out", req.Method, uri)
 
