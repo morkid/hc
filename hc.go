@@ -258,6 +258,9 @@ func (t *transport) RoundTrip(req *http.Request) (res *http.Response, err error)
 						}
 					}
 				}
+			} else {
+				jsonLog.RawError = err
+				jsonLog.ErrorMessage = err.Error()
 			}
 		}
 
