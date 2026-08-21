@@ -356,7 +356,7 @@ func TestLogSingleJSONEnabled(t *testing.T) {
 	assert.Contains(t, output, `"attempts":1`)
 	assert.Contains(t, output, `"request_headers"`)
 	assert.Contains(t, output, `"response_headers"`)
-	assert.Contains(t, output, `"error_message":""`)
+	assert.NotContains(t, output, `"error_message":""`)
 }
 
 func TestLogSingleJSONEnabledInterceptorError(t *testing.T) {
@@ -412,7 +412,7 @@ func TestLogSingleJSONEnabledTakeOver(t *testing.T) {
 	output := logOutput.String()
 	assert.Contains(t, output, `"url":"https://example.com/hello"`)
 	assert.Contains(t, output, `"status_code":201`)
-	assert.Contains(t, output, `"error_message":""`)
+	assert.NotContains(t, output, `"error_message":""`)
 }
 
 func TestLogSingleJSONEnabledWithRetry(t *testing.T) {
@@ -536,7 +536,7 @@ func TestJSONLogRawErrorNil(t *testing.T) {
 	j := &JSONLog{}
 	data, err := json.Marshal(j)
 	assert.Nil(t, err)
-	assert.Contains(t, string(data), `"raw_error":null`)
+	assert.NotContains(t, string(data), `"raw_error":null`)
 }
 
 func TestForceAttemptHTTP2Disabled(t *testing.T) {
