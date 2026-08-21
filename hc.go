@@ -288,12 +288,12 @@ type JSONLog struct {
 	StatusCode      int               `json:"status_code"`
 	DurationMS      int64             `json:"duration_ms"`
 	Attempts        int               `json:"attempts"`
-	RequestBody     string            `json:"request_body"`
-	ResponseBody    string            `json:"response_body"`
-	RequestHeaders  map[string]string `json:"request_headers"`
-	ResponseHeaders map[string]string `json:"response_headers"`
-	ErrorMessage    string            `json:"error_message"`
-	RawError        error             `json:"raw_error"`
+	RequestBody     string            `json:"request_body,omitempty"`
+	ResponseBody    string            `json:"response_body,omitempty"`
+	RequestHeaders  map[string]string `json:"request_headers,omitempty"`
+	ResponseHeaders map[string]string `json:"response_headers,omitempty"`
+	ErrorMessage    string            `json:"error_message,omitempty"`
+	RawError        error             `json:"raw_error,omitempty"`
 	startedAt       time.Time         `json:"-"`
 	finishedAt      time.Time         `json:"-"`
 }
